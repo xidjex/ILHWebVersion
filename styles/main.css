@@ -1,0 +1,47 @@
+html,body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	text-align: center;
+	background-color: #E0E0E0;
+}
+
+#fixed {
+	position: absolute;
+	left: 0;
+	top: 0;
+	padding: 0;
+	width: 370px;
+	height: 400px;
+	text-align: center;
+	background-color: white;
+}
+
+input[type="range"] {
+	width: 210px;
+	position: relative;
+	float: left;
+	margin-top: 15px;
+}
+
+label {
+	float: right;
+}
+
+p {
+	overflow: hidden;
+}
+
+.set-type-wrap {
+	display: table;
+	overflow: hidden;
+	text-align: left;
+	background-color: #909090;
+}
+
+.set-gradient-type {
+	float: left;
+	margin: 10px;
+}
