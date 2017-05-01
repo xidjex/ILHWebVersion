@@ -77,7 +77,7 @@ function Palette() { //Конструктор палитры цветов
 		}
 	};
 
-	function test(){
+	function test11(){
 		this.test0 = function(x, y) {
 			return x + y;
 		};
@@ -85,8 +85,8 @@ function Palette() { //Конструктор палитры цветов
 			return x - y;
 		}
 	}
-var test2 = new test();
-	console.log(new test()["test0"](1,1));
+var test2 = new test11();
+	console.log(new test11()["test0"](1,1));
 
 	var colorGrade = function(startValue, intensity,  type, fieldWidth, fieldHeight, incrementI, incrementJ) { // Создание градиента цвета
 		var x = 0;
