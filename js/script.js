@@ -5,17 +5,21 @@ var ctx = canvas.getContext("2d");
 canvas.addEventListener("click", clickListener);
 canvas.addEventListener("mousemove", moveEventListener);
 canvas.addEventListener("contextmenu", testing);
+
+dot = new Image();
+dot.src = "dot.png";
+dot.addEventListener("load", function(e) {
+	console.log(dot);
+})
 var isGetColor = false;
 function print(arr, size) {
 	ctx.fillStyle = "#FFF";
 	ctx.fillRect(0, 0, 400, 600);
 	for(var i = 0; i <= arr.length - 1; i++) {
 		for(var j = 0; j <= arr[i].length - 1; j++) {
-			ctx.shadowOffsetX = 0;
-			ctx.shadowOffsetY = 0;
-			ctx.shadowBlur = 0;
 			ctx.fillStyle = arr[i][j]["color"];
 			ctx.fillRect(j * size, i * size, size, size);
+			ctx.drawImage(dot, j  * size, i * size, size, size);
 		}
 	}
 }
@@ -27,6 +31,10 @@ function createSquare(color, x, y, width, height) {
 
 	ctx.fillStyle = color;
 	ctx.fillRect(x, y, width, height);
+	
+	ctx.shadowOffsetX = 0;
+	ctx.shadowOffsetY = 0;
+	ctx.shadowBlur = 0;
 }
 
 Array.prototype.shuffle = function() {
@@ -55,104 +63,118 @@ function getPositionOnArr(x, y, size) {
 	return {x: resultX, y: resultY};
 }
 
-function Palette() { //Конструктор палитры цветов
-	this.palette = new Array(); //Переменная с палитрой
+var Palette = function(width, height, colorsRGB) { //Конструктор палитры цветов
+	var that = this;
+	var palette = new Array(); //Переменная с палитрой
 	this.lastColor = null; //Зачение последнего измененного цвета
 	this.lastIndex = null; //Индекс последнего измененного цвета
 	this.lastX = null; //Координата Х последнего измененного цвета
 	this.lastY = null; //Координата У последнего измененного цвета
 
-	var that = this;
-
-	this.create = function(width, height, red, green, blue) { //Создание поалитры на основе ширины, высоты, параметров значения цвета, интенсивность и типа его градиента
-		var cellId = 1;
-		for(var i = 0; i <= height - 1; i++) {
-			that.palette[i] = new Array();
-			for(var j = 0; j <= width - 1; j++) {
-				that.palette[i][j] = new Array()
-				that.palette[i][j]["color"] = "rgb(" + colorGrade(red["value"], red["intensity"], red["type"], width, height, i, j) + "," + colorGrade(green["value"], green["intensity"], green["type"], width, height, i, j) + ", " + colorGrade(blue["value"], blue["intensity"], blue["type"], width, height, i, j) + ")";
-
-				that.palette[i][j]["index"] = cellId++;
-			}
-		}
-	};
-
 	var colorGrade = function(startValue, intensity,  type, fieldWidth, fieldHeight, incrementI, incrementJ) { // Создание градиента цвета
-		var x = 0;
+		var variableValue = 0;
 		switch (type){
 			case "diagonalUpLeft":
-				x = (incrementI + incrementJ) / 2;
+				variableValue = (incrementI + incrementJ) / 2;
 				break;
 			case "diagonalUpRight":
-				x = (incrementI + (fieldWidth - 1 - incrementJ)) / 2;
+				variableValue = (incrementI + (fieldWidth - 1 - incrementJ)) / 2;
 				break;
 			case "diagonalDownLeft":
-				x = ((fieldHeight - 1 - incrementI) + incrementJ) / 2;
+				variableValue = ((fieldHeight - 1 - incrementI) + incrementJ) / 2;
 				break;
 			case "diagonalDownRight":
-				x = ((fieldHeight - 1 - incrementI) + (fieldWidth - 1 - incrementJ)) / 2;
+				variableValue = ((fieldHeight - 1 - incrementI) + (fieldWidth - 1 - incrementJ)) / 2;
 				break;
 			case "upDown":
-				x = incrementI;
+				variableValue = incrementI;
 				break;
 			case "downUp":
-				x = fieldHeight - 1 - incrementI;
+				variableValue = fieldHeight - 1 - incrementI;
 				break;
 			case "leftRight":
-				x = incrementJ;
+				variableValue = incrementJ;
 				break;
 			case "rightLeft":
-				x = fieldWidth - 1 - incrementJ;
+				variableValue = fieldWidth - 1 - incrementJ;
 				break;
 			default:
-				x = (incrementI + incrementJ) / 2;
+				variableValue = (incrementI + incrementJ) / 2;
 		}
-		return (startValue - (Math.round(startValue * (((1 / ((fieldWidth + fieldHeight) / intensity)) * x)))));
+		return (startValue - (Math.round(startValue * (((1 / ((fieldWidth + fieldHeight) / intensity)) * variableValue)))));
 	}.bind(this);
-
-	// this.shuffle = function(arr) {
-	// 	for(var i = 0; i <= that.palette.length - 1; i++) {
-	// 		that.palette.shuffle();
-	// 		for(var j = 0; j <= that.palette[i].length - 1; j++) {
-	// 			that.palette[i].shuffle();
-	// 			that.palette.shuffle();
-	// 		}
-	// 	}
-	// };
-	this.setColor = function(x, y, color, index) {
+	
+	this.setColor = function(x, y, color, index, draggable) {
 		that.lastX = x;
 		that.lastY = y;
-		that.lastColor = that.palette[y][x]["color"];
-		that.lastIndex = that.palette[y][x]["index"];
+		that.lastColor = palette[y][x]["color"];
+		that.lastIndex = palette[y][x]["index"];
 
-		that.palette[y][x]["color"] = color;
-		that.palette[y][x]["index"] = index;
+		palette[y][x]["color"] = color;
+		palette[y][x]["index"] = index;
 	};
 	this.setNum = function(x, y, num) {
-		that.lastIndex = that.palette[y][x]["index"];
+		that.lastIndex = palette[y][x]["index"];
 
-		that.palette[y][x]["index"] = num;
-	}
+		palette[y][x]["index"] = num;
+	};
 	this.getColor= function(x, y) {
-		return that.palette[y][x]["color"];
-	}
+		return palette[y][x]["color"];
+	};
 	this.getNum = function(x, y) {
-		return that.palette[y][x]["index"];
+		return palette[y][x]["index"];
+	};
+	this.isDraggable = function(x, y) {
+		return palette[y][x]["draggable"];
+	};
+	this.setDraggable = function(x, y, bool) {
+		if (bool === undefined) bool = true;
+		palette[y][x]["draggable"] = bool;
+	};
+	this.getPalette = function() {
+		return palette;
+	};
+	
+	var cellId = 1;
+	for(var i = 0; i <= height - 1; i++) {
+		palette[i] = new Array();
+		for(var j = 0; j <= width - 1; j++) {
+			palette[i][j] = new Array();
+			palette[i][j]["draggable"] = true;
+			that.setColor(j, i, "rgb(" + colorGrade(colorsRGB[0]["value"], colorsRGB[0]["intensity"], colorsRGB[0]["gradeType"], width, height, i, j) + "," + colorGrade(colorsRGB[1]["value"], colorsRGB[1]["intensity"], colorsRGB[1]["gradeType"], width, height, i, j) + ", " + colorGrade(colorsRGB[2]["value"], colorsRGB[2]["intensity"], colorsRGB[2]["gradeType"], width, height, i, j) + ")", cellId++);
+		}
 	}
-}
-
-pal = new Palette();
+	
+};
 
 var types = ["diagonalUpLeft", "diagonalUpRight", "diagonalDownLeft", "diagonalDownRight", "leftRight", "rightLeft"];
-pal.create2(8, 10, {value: Math.round(Math.random() * 255), intensity: Math.round(Math.random() * 3), type: types[Math.round(Math.random() * (types.length - 1))]}, {value: Math.round(Math.random() * 255), intensity: Math.round(Math.random() * 3), type: types[Math.round(Math.random() * (types.length - 1))]}, {value: Math.round(Math.random() * 255), intensity: Math.round(Math.random() * 3), type: types[Math.round(Math.random() * (types.length - 1))]});
 
-print(pal.palette, 35);
+var color = [
+	{
+		value: Math.round(Math.random() * 255),
+		intensity: Math.round(Math.random() * 3),
+		gradeType: types[Math.round(Math.random() * (types.length - 1))]
+	},
+	{
+		value: Math.round(Math.random() * 255),
+		intensity: Math.round(Math.random() * 3),
+		gradeType: types[Math.round(Math.random() * (types.length - 1))]
+	},
+	{
+		value: Math.round(Math.random() * 255),
+		intensity: Math.round(Math.random() * 3),
+		gradeType: types[Math.round(Math.random() * (types.length - 1))]
+	}
+]
+pal = new Palette(8, 10, color);
+
+print(pal.getPalette(), 35);
 
 function clickListener(e) {
 	arr = getPositionOnArr(e.layerX, e.layerY, 35);
 	if(!isGetColor) {
 		pal.setColor(arr.x, arr.y, "rgb(255, 255, 255)", -1);
-		print(pal.palette, 35);
+		print(pal.getPalette(), 35);
 		isGetColor = true;
 	}else{
 		x = pal.lastX;
@@ -166,13 +188,11 @@ function clickListener(e) {
 
 		var trig = true;
 
-		for(var i = 0; i <= pal.palette.length - 2; i++) {
-			for(var j = 0; j <= pal.palette[i].length - 2; j++) {
-				console.log(i + "---" + j);
-				if((pal.getNum(j, i) + 1) == pal.getNum(j + 1, i) && (pal.getNum(j, i) + pal.palette[i].length) == pal.getNum(j, i + 1)) {
+		for(var i = 0; i <= pal.getPalette().length - 2; i++) {
+			for(var j = 0; j <= pal.getPalette()[i].length - 2; j++) {
+				if((pal.getNum(j, i) + 1) == pal.getNum(j + 1, i) && (pal.getNum(j, i) + pal.getPalette()[i].length) == pal.getNum(j, i + 1)) {
 					continue;
 				} else {
-					console.log((pal.getNum(j, i) + pal.palette[i].length) + "--" + pal.getNum(j, i + 1));
 					trig = false;
 					break;
 				}
@@ -187,9 +207,9 @@ function clickListener(e) {
 }
 
 function moveEventListener(e) {
-	print(pal.palette, 35);
+	print(pal.getPalette(), 35);
 	if(isGetColor) {
-		createSquare(pal.lastColor, e.layerX - 20, e.layerY - 20, 35, 35);
+		createSquare(pal.lastColor, e.layerX - 20, e.layerY - 20, 40, 40);
 	}
 }
 
@@ -197,9 +217,6 @@ function testing(e) {
 	e.preventDefault();
 	e.stopPropagation();
 	arr = getPositionOnArr(e.layerX, e.layerY, 35);
-
-	console.log(pal.getColor(arr.x, arr.y) + "----" + pal.getNum(arr.x,arr.y));
-	console.log("last num--" + pal.lastIndex);
 	$("#next-block").css("background-color", pal.getColor(arr.x, arr.y));
 }
 
@@ -208,8 +225,8 @@ var arr2 = {red: 100, green: 100, blue: 100, iRed: 2, iGreen: 2, iBlue: 0};
 $(".type-select").on("change", function() {
 	arr_type[$(this).attr("data-color")] = $(this).val();
 	pal = new Palette();
-	pal.create2(8, 8, {value: arr2.red, intensity: arr2.iRed, type: arr_type.red}, {value: arr2.green, intensity: arr2.iGreen, type: arr_type.green}, {value: arr2.blue, intensity: arr2.iBlue, type: arr_type.blue});
-	print(pal.palette, 35);
+	pal.create(8, 8, {value: arr2.red, intensity: arr2.iRed, type: arr_type.red}, {value: arr2.green, intensity: arr2.iGreen, type: arr_type.green}, {value: arr2.blue, intensity: arr2.iBlue, type: arr_type.blue});
+	print(pal.getPalette(), 35);
 });
 
 $("input[type=range").on("change", function(e) {
@@ -219,9 +236,8 @@ $("input[type=range").on("change", function(e) {
 	arr2["iRed"] = parseFloat($("#intensity-red").val());
 	arr2["iGreen"] = parseFloat($("#intensity-green").val());
 	arr2["iBlue"] = parseFloat($("#intensity-blue").val());
-	console.log(red + "---" + green + "---" + blue);
 	pal = new Palette();
-	pal.create2(8, 8, {value: arr2.red, intensity: arr2.iRed, type: arr_type.red}, {value: arr2.green, intensity: arr2.iGreen, type: arr_type.green}, {value: arr2.blue, intensity: arr2.iBlue, type: arr_type.blue});
-	print(pal.palette, 35);
+	pal.create(8, 8, {value: arr2.red, intensity: arr2.iRed, type: arr_type.red}, {value: arr2.green, intensity: arr2.iGreen, type: arr_type.green}, {value: arr2.blue, intensity: arr2.iBlue, type: arr_type.blue});
+	print(pal.getPalette(), 35);
 
 })
