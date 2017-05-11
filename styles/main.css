@@ -5,7 +5,7 @@ html,body {
 
 body {
 	text-align: center;
-	background-color: #E0E0E0;
+	background-color: #000;
 }
 
 #fixed {
@@ -13,8 +13,8 @@ body {
 	left: 0;
 	top: 0;
 	padding: 0;
-	width: 370px;
-	height: 400px;
+	width: 340px;
+	height: 100%;
 	text-align: center;
 	background-color: white;
 }
@@ -44,4 +44,8 @@ p {
 .set-gradient-type {
 	float: left;
 	margin: 10px;
+}
+
+#field-canvas {
+	background-color: floralwhite;
 }

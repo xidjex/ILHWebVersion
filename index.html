@@ -7,7 +7,7 @@
 	<body>
 		<div id="wrapper">
 			<div id="field">
-				<canvas id="field-canvas" width="600" height="700"></canvas>
+				<canvas id="field-canvas" width="480" height="600"></canvas>
 			</div>
 				<div id="next-block"></div>
 		</div>
@@ -35,17 +35,19 @@
 					<option value="leftRight">leftRight</option>
 					<option value="rightLeft">rightLeft</option>
 				</select>
-				<select id="select-type-green" class="type-select" data-color="green">
-					<option disabled selected>Green</option>
-					<option value="diagonalUpLeft">diagonalUpLeft</option>
-					<option value="diagonalUpRight">diagonalUpRight</option>
-					<option value="diagonalDownLeft">diagonalDownLeft</option>
-					<option value="diagonalDownRight">diagonalDownRight</option>
-					<option value="upDown">upDown</option>
-					<option value="downUp">downUp</option>
-					<option value="leftRight">leftRight</option>
-					<option value="rightLeft">rightLeft</option>
-				</select>
+				<p>
+					<select id="select-type-green" class="type-select" data-color="green">
+						<option disabled selected>Green</option>
+						<option value="diagonalUpLeft">diagonalUpLeft</option>
+						<option value="diagonalUpRight">diagonalUpRight</option>
+						<option value="diagonalDownLeft">diagonalDownLeft</option>
+						<option value="diagonalDownRight">diagonalDownRight</option>
+						<option value="upDown">upDown</option>
+						<option value="downUp">downUp</option>
+						<option value="leftRight">leftRight</option>
+						<option value="rightLeft">rightLeft</option>
+					</select>
+				</p>
 				<select id="select-type-blue" class="type-select" data-color="blue">
 					<option disabled selected>Blue</option>
 					<option value="diagonalUpLeft">diagonalUpLeft</option>
@@ -58,6 +60,17 @@
 					<option value="rightLeft">rightLeft</option>
 				</select>
 			</div>
+			<p>
+				<select id="levels">
+					<option selected disabled>Selcet level:</option>
+				</select>
+			</p>
+			<button id="print">Print</button>
+			<input id="txt-field" dtype="text">
+			<p>
+				<input id="width" type="number" placeholder="width">
+				<input id="height" type="number" placeholder="height">
+			</p>
 		</div>
 
 		<script src="js/jquery-3.1.1.min.js"></script>
