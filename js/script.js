@@ -3,14 +3,46 @@ var ctx = canvas.getContext("2d");
 var canvasWidth = canvas.width;
 var canvasHeight = canvas.height;
 
-canvas.addEventListener("click", clickListener);
+canvas.addEventListener("mousedown", downClickListener);
 canvas.addEventListener("mousemove", moveEventListener);
+canvas.addEventListener("mouseup", upClickListener);
 canvas.addEventListener("contextmenu", rightButton);
 
-dot = new Image();
-dot.src = "dot.png";
-dot.addEventListener("load", function(e) {
-});
+canvas.addEventListener("touchstart", function (e) {
+        mousePos = getTouchPos(canvas, e);
+  var touch = e.touches[0];
+  var mouseEvent = new MouseEvent("mousedown", {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  canvas.dispatchEvent(mouseEvent);
+}, false);
+canvas.addEventListener("touchend", function (e) {
+	var touch = e.changedTouches[0];
+  var mouseEvent = new MouseEvent("mouseup", {
+	clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  canvas.dispatchEvent(mouseEvent);
+}, false);
+canvas.addEventListener("touchmove", function (e) {
+  var touch = e.touches[0];
+  var mouseEvent = new MouseEvent("mousemove", {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  canvas.dispatchEvent(mouseEvent);
+}, false);
+
+// Get the position of a touch relative to the canvas
+function getTouchPos(canvasDom, touchEvent) {
+  var rect = canvasDom.getBoundingClientRect();
+  return {
+    x: touchEvent.touches[0].clientX - rect.left,
+    y: touchEvent.touches[0].clientY - rect.top
+  };
+}
+
 var isGetColor = false;
 
 function createSquare(color, x, y, width, height) { //Отрисовка квадрата выбранного цвета
@@ -90,9 +122,10 @@ var Palette = function() { //Конструктор палитры цветов
 		
 		that.width = width;
 		that.height = height;
-		that.cellWidth = canvasWidth / that.width;
-		that.cellHeight = canvasHeight / that.height;
+		that.cellWidth = (canvasWidth - (canvasWidth % that.width)) / that.width; 
+		that.cellHeight = (canvasHeight - (canvasHeight % that.height)) / that.height;
 		var cellId = 1;
+		console.log(that.cellWidth);
 		for(var i = 0; i <= height - 1; i++) {
 			palette[i] = {};
 			for(var j = 0; j <= width - 1; j++) {
@@ -108,8 +141,8 @@ var Palette = function() { //Конструктор палитры цветов
 			palette = obj;
 			that.width = Object.keys(palette[0]).length;
 			that.height = Object.keys(palette).length;
-			that.cellWidth = canvasWidth / that.width;
-			that.cellHeight = canvasHeight / that.height;
+			that.cellWidth = (canvasWidth - (canvasWidth % that.width)) / that.width;
+			that.cellHeight = (canvasHeight - (canvasHeight % that.height)) / that.height;
 		} else {
 			console.error("Invalid data!");
 		} 
@@ -148,49 +181,72 @@ var Level = function() {
 	var that = this;
 	this.palette = null;
 	this.openedLevel = null;
-	//this.i = 0;
-	//this.j = 0;
+	var score = 0,
+		moves = 0,
+		isTakenCell = false,
+		render = null;
 	
-	this.open = function(levelObject) {
+	this.open = function(levelObject, render) {
 		that.palette = new Palette();
 		that.palette.open(levelObject["palette"]);
 		that.openedLevel = levelObject["number"];
+		render = render;
 	};
 	this.create = function() {
 		
 	};
-//	this.render = function(context) {
-//		if(that.palette != null) {
-//			context.clearRect(0, 0, canvasWidth, canvasHeight);
-//			for(var i = 0; i <= that.palette.height - 1; i++) {
-//				for(var j = 0; j <= that.palette.width - 1; j++) {
-//					that.i = i;
-//					that.j = j;
-//					/*context.fillStyle = that.palette.getColor(j, i);
-//					context.fillRect(j * that.palette.cellWidth, i * that.palette.cellHeight, that.palette.cellWidth, that.palette.cellHeight);*/
-//					
-//					animate({
-//						duration: 1000,
-//						timing: quad,
-//						draw: animateCell,
-//						i: i,
-//						j: j
-//					}, that);
-//					
-///*					if(!that.palette.isDraggable(j, i)) {
-//						context.drawImage(dot, j  * that.palette.cellWidth + (that.palette.cellWidth - dot.width) / 2, i * that.palette.cellHeight + (that.palette.cellHeight - dot.height) / 2);
-//					}					*/
-//				}
-//			}
-//		} else {
-//			console.error("Palette not init!");
-//		}
-//	};
 	this.getPositionOnPalette = function (x, y) { //Находит координаты ячейки в массиве палитры по координатам курсора
 		resultX = Math.floor(x / that.palette.cellWidth);
 		resultY = Math.floor(y / that.palette.cellHeight);
 		
 		return {x: resultX, y: resultY};
+	};
+	this.checkIsWin = function() {
+		var trig = true;
+		for(var i = 0; i <= Object.keys(that.palette.getPalette()).length - 2; i++) {
+			for(var j = 0; j <= Object.keys(that.palette.getPalette()[i]).length - 2; j++) {
+				if((that.palette.getNum(j, i) + 1) == that.palette.getNum(j + 1, i) && (that.palette.getNum(j, i) + Object.keys(that.palette.getPalette()[i]).length) == that.palette.getNum(j, i + 1)) {
+					continue;
+				} else {
+					trig = false;
+					break;
+				}
+			}
+		}
+		return trig;
+	};
+	this.getCell = function(x, y) {
+		if(that.palette.isDraggable(x, y)) {
+			that.palette.setColor(x, y, "#000000", -1);
+			render.rederPalette(false);
+			isTakenCell = true;
+			return that.palette.lastColor;
+		} else {
+			return false;
+		}
+	};
+	this.placeCell = function(x, y) {
+		var lastX = lvl.palette.lastX;
+		var lastY = lvl.palette.lastY;
+		if (that.palette.lastX == x && that.palette.lastY == y) {
+			that.palette.setColor(x, y, that.palette.lastColor, that.palette.lastIndex);
+		}
+		else if (!that.palette.isDraggable(x, y)) {
+			render.renderAnimatedCell(lastX, lastY, circ, 300,  that.palette.lastColor);
+			that.palette.setColor(lastX, lastY, that.palette.lastColor, that.palette.lastIndex);
+			
+		}else{
+			that.palette.setColor(x, y, that.palette.lastColor, that.palette.lastIndex);
+			render.renderAnimatedCell(lastX, lastY, circ, 300,  that.palette.lastColor);
+			that.palette.setColor(lastX, lastY, that.palette.lastColor, that.palette.lastIndex);
+		}
+		isTakenCell = false;
+	};
+	this.getIsTakenCell = function() {
+		return isTakenCell;
+	}
+	this.makeMove = function(startX, startY, targetX, targetY) {
+		
 	};
 };
 
@@ -241,7 +297,6 @@ var lvl = new Level();
 
 function callback(data) {
 	lvl.open(lvlLoader.getLevel(4));
-	//lvl.render(ctx);
 	pal = lvl.palette;
 	render = new Render(ctx, lvl);
 	render.rederPalette(true);
@@ -249,48 +304,25 @@ function callback(data) {
 	selectLevels(lvlLoader.getLoadedLevels());
 };
 
-function clickListener(e) {
+function downClickListener(e) {
 	arr = lvl.getPositionOnPalette(e.offsetX, e.offsetY);
-	if(lvl.palette.getPalette()[arr.y][arr.x]["draggable"]) {
-		if(!isGetColor) {
-			lvl.palette.setColor(arr.x, arr.y, "rgb(0, 0, 0)", -1);
-			render.rederPalette(false);
-			isGetColor = true;
-		}else{
-			x = lvl.palette.lastX;
-			y = lvl.palette.lastY;
-			if (x == arr.x && y == arr.y) {
-				lvl.palette.setColor(arr.x, arr.y, lvl.palette.lastColor, lvl.palette.lastIndex);
-			}else{
-				lvl.palette.setColor(arr.x, arr.y, lvl.palette.lastColor, lvl.palette.lastIndex);
-				render.renderAnimatedCell(x, y, lvl.palette.lastColor);
-				lvl.palette.setColor(x, y, lvl.palette.lastColor, lvl.palette.lastIndex);
-			}
+	var color = lvl.getCell(arr.x, arr.y);
+	if(color) createSquare(color, e.offsetX - (lvl.palette.cellWidth + 5) / 2, e.offsetY - (lvl.palette.cellHeight + 5) / 2, lvl.palette.cellWidth + 5, lvl.palette.cellHeight + 5);
+};
 
-			var trig = true;
-
-			for(var i = 0; i <= Object.keys(lvl.palette.getPalette()).length - 2; i++) {
-				for(var j = 0; j <= Object.keys(lvl.palette.getPalette()[i]).length - 2; j++) {
-					if((lvl.palette.getNum(j, i) + 1) == lvl.palette.getNum(j + 1, i) && (lvl.palette.getNum(j, i) + Object.keys(lvl.palette.getPalette()[i]).length) == lvl.palette.getNum(j, i + 1)) {
-						continue;
-					} else {
-						trig = false;
-						break;
-					}
-				}
-			}
-
-			if(!trig) console.log("Not finish!");
-			else alert("Finished!");
-
-			isGetColor = false;
-		}
+function upClickListener(e) {
+	arr = lvl.getPositionOnPalette(e.offsetX, e.offsetY);
+	lvl.placeCell(arr.x, arr.y);
+	if(lvl.checkIsWin()) {
+		//alert("Finished!");
+		render.rederPaletteReverse();
 	}
+	else console.log("Not finish!");
 };
 
 function moveEventListener(e) {
-	render.rederPalette(false);
-	if(isGetColor) {
+	if(lvl.getIsTakenCell()) {
+		render.rederPalette(false);
 		createSquare(lvl.palette.lastColor, e.offsetX - (lvl.palette.cellWidth + 5) / 2, e.offsetY - (lvl.palette.cellHeight + 5) / 2, lvl.palette.cellWidth + 5, lvl.palette.cellHeight + 5);
 	}
 };
@@ -320,6 +352,7 @@ var height = 10;
 $(".type-select").on("change", function() {
 	arr2[$(this).attr("data-color")].shadeType = $(this).val();
 	lvl.palette.create(width, height, arr2);
+	render.updateLevel(lvl);
 	render.rederPalette(false);
 });
 
@@ -331,6 +364,7 @@ $("input[type=range").on("change", function(e) {
 	arr2.green.intensity = parseFloat($("#intensity-green").val());
 	arr2.blue.intensity = parseFloat($("#intensity-blue").val());
 	lvl.palette.create(width, height, arr2);
+	render.updateLevel(lvl);
 	render.rederPalette(false);
 
 });
@@ -369,37 +403,36 @@ var Render = function(canvasContext, level) {
 	this.level = level;
 	this.palette = level.palette;
 	this.context = canvasContext;
-		
+	var cellWidth = that.palette.cellWidth,
+		cellHeight = that.palette.cellHeight;
+		backgoundColor = $("#body").css("background-color");
+	
+	var dot = new Image();
+	dot.src = "dot.png";
+	/*dot.addEventListener("load", function(e) {
+	});*/
+	this.updateLevel =  function(level) {
+		that.level = level;
+		that.palette = level.palette;
+		cellWidth = that.palette.cellWidth;
+		cellHeight = that.palette.cellHeight;
+	};
 	this.rederPalette = function(isPlayAnimation) {
 		if(that.palette != null) {
 			canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
 			for(var i = 0; i <= that.palette.height - 1; i++) {
 				for(var j = 0; j <= that.palette.width - 1; j++) {
+					
+					var x = j * cellWidth,
+						y = i * cellHeight,
+						color = that.palette.getColor(j, i),
+						isDraggable = that.palette.isDraggable(j, i);
+					
 					if(isPlayAnimation) {
-						animate({
-						duration: (1000 + (Math.round(5000 * (((1 / ((8 + 10))) * ((i + j) / 2)))))),
-						timing: quad,
-						draw: drawCell,
-						endCallback: drawDot
-					}, {
-							context: that.context,
-							width: that.palette.cellWidth,
-							height: that.palette.cellHeight,
-							x: j * that.palette.cellWidth,
-							y: i * that.palette.cellHeight,
-							color: that.palette.getColor(j, i),
-						},{
-							context: that.context,
-							width: that.palette.cellWidth,
-							height: that.palette.cellHeight,
-							x: j * that.palette.cellWidth,
-							y: i * that.palette.cellHeight,
-							draggable: that.palette.isDraggable(j, i)
-						});
+						this.renderAnimatedCell(j, i, linear, (800 + (Math.round(3000 * (((1 / ((8 + 10))) * ((i + j) / 2)))))));
 					} else {
-						that.context.fillStyle = that.palette.getColor(j, i);
-						that.context.fillRect(j * that.palette.cellWidth, i * that.palette.cellHeight, that.palette.cellWidth, that.palette.cellHeight);
-						if(!that.palette.isDraggable(j, i)) that.context.drawImage(dot, j * that.palette.cellWidth + (that.palette.cellWidth - dot.width) / 2, i * that.palette.cellHeight + (that.palette.cellHeight - dot.height) / 2);
+						drawCell(that.context, x, y, cellWidth, cellHeight, color);
+						if(!isDraggable) drawDot(that.context, x, y, cellWidth, cellHeight);
 					}	
 				}
 			}
@@ -407,24 +440,50 @@ var Render = function(canvasContext, level) {
 			console.error("Palette not init!");
 		}
 	};
-	
-	this.renderAnimatedCell = function(x, y, color) {
-		animate({
-				duration: 300,
-				timing: circ,
-				draw: drawCell
-			},
-			{
-			context: that.context,
-			width: that.palette.cellWidth,
-			height: that.palette.cellHeight,
-			x: x * that.palette.cellWidth,
-			y: y * that.palette.cellHeight,
-			color: color,
-		});
+	this.rederPaletteReverse = function() {
+		if(that.palette != null) {
+			canvasContext.fillStyle = backgoundColor;
+			canvasContext.fillRect(0, 0, canvasWidth, canvasHeight);
+			for(var i = that.palette.height - 1; i >= 0; i--) {
+				for(var j = that.palette.width - 1; j >= 0; j--) {
+					
+					var x = j * cellWidth,
+						y = i * cellHeight,
+						color = that.palette.getColor(j, i);
+						this.renderAnimatedCellReverse(j, i, linear, (800 + (Math.round(5000 * (((1 / ((8 + 10))) * ((i + j) / 2)))))));
+				}
+			}
+		} else {
+			console.error("Palette not init!");
+		}
 	};
-		
-	var animate = function(options, drawOptions, endOptions) {
+	this.renderAnimatedCell = function(x, y, timing, duration, color) {
+		var color = color ? color : that.palette.getColor(x, y); 
+		animate({
+				duration: duration,
+				timing: timing,
+				draw: function(timeFraction) {
+					drawCell(that.context, x * cellWidth, y * cellHeight, cellWidth, cellHeight, backgoundColor);
+					drawCell(that.context, x * cellWidth + (cellWidth - cellWidth * timeFraction) / 2, y * cellHeight + (cellHeight - cellHeight * timeFraction) / 2, cellWidth * timeFraction, cellHeight * timeFraction, color);
+				},
+				endCallback: function() {
+					if(!that.palette.isDraggable(x, y)) drawDot(that.context, x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+				}
+			});
+	};
+	this.renderAnimatedCellReverse = function(x, y, timing, duration, color) {
+		var color = color ? color : that.palette.getColor(x, y); 
+		animate({
+				duration: duration,
+				timing: timing,
+				draw: function(timeFraction) {
+					timeFraction = (1 - timeFraction);
+					drawCell(that.context, x * cellWidth, y * cellHeight, cellWidth, cellHeight, backgoundColor);
+					drawCell(that.context, x * cellWidth + (cellWidth - cellWidth * timeFraction) / 2, y * cellHeight + (cellHeight - cellHeight * timeFraction) / 2, cellWidth * timeFraction, cellHeight * timeFraction, color);
+				}
+			});
+	};
+	var animate = function(options) {
 	  var start = performance.now();
 
 	  requestAnimationFrame(function animate(time) {
@@ -433,51 +492,40 @@ var Render = function(canvasContext, level) {
 		if (timeFraction > 1) timeFraction = 1;
 
 		// текущее состояние анимации
-		var progress = options.timing(timeFraction)
+		var progress = options.timing(timeFraction);
 
-		options.draw.call(this, progress, drawOptions);
-
+		options.draw(progress);
+		  
 		if (timeFraction < 1) {
 		  requestAnimationFrame(animate);
 		} else {
-			if(options.endCallback) options.endCallback(endOptions);
+			if(options.endCallback) options.endCallback();
 		}
 
 	  });
 	};
 	
-	var drawCell = function(timing, options) {
-		var context = options.context, 
-		width = options.width, 
-		height = options.height,
-		x = options.x, 
-		y = options.y, 
-		color = options.color;
-		context.fillStyle = "#000";
-		context.fillRect(x, y, width, height);
+	var drawCell = function(context, x, y, width, height, color) {
 		context.fillStyle = color;
-		context.fillRect(x + (width - width * timing) / 2, y + (height - height * timing) / 2, width * timing, height * timing);
+		context.fillRect(x, y, width, height);
 	};
 	
-	var drawDot = function(options) {
-		var x = options.x,
-			y = options.y,
-			width = options.width,
-			height = options.height,
-			draggable = options.draggable,
-			context = options.context
-		
-		if(!draggable) context.drawImage(dot, x + (width - dot.width) / 2, y + (height - dot.height) / 2);
+	var drawDot = function(context, x, y, width, height) {
+		context.drawImage(dot, x + (width - dot.width) / 2, y + (height - dot.height) / 2);
 	};
 	
 };
 
 function circ(timeFraction) {
-  return 1 - Math.sin(Math.sin(1 - timeFraction))
-}
+  return 1 - Math.sin(Math.sqrt(1 - timeFraction))
+};
+
+function linear(timeFraction) {
+	return timeFraction;
+};
 
 function elastic(x, timeFraction) {
-  return Math.pow(2, 10 * (timeFraction - 1)) * Math.cos(20 * Math.PI * x / 3 * timeFraction)
+  return Math.pow(2, 10 * (timeFraction - 1)) * Math.acos(20 * Math.PI * x / 3 * timeFraction)
 };
 
 function quad(progress) {

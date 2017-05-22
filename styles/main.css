@@ -3,9 +3,9 @@ html,body {
 	padding: 0;
 }
 
-body {
+#body {
 	text-align: center;
-	background-color: #000;
+	background-color: #000d10;
 }
 
 #fixed {
@@ -16,6 +16,7 @@ body {
 	width: 340px;
 	height: 100%;
 	text-align: center;
+	display: none;
 	background-color: white;
 }
 
@@ -47,4 +48,5 @@ p {
 }
 
 #field-canvas {
+	cursor: pointer;
 }
